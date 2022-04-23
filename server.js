@@ -1,7 +1,7 @@
 const http = require('http');
 const errorHandle = require('./errorHandle');
 const mongoose = require('mongoose');
-const Todo = require('./models/todo')
+const Post = require('./models/postModels')
 const dotenv = require('dotenv')
 
 dotenv.config({ path: "./config.env" })
@@ -25,59 +25,48 @@ const requestListener =async (req , res) =>{
     req.on('data',chuck=>{
         body+=chuck;
     })
-    if(req.url =="/todos" && req.method == "GET"){
-        todos = await Todo.find();
+    if(req.url =="/posts" && req.method == "GET"){
+        const post  = await Post.find();
         res.writeHead(200,headers);
         res.write(JSON.stringify({
             "status":"success",
-            "data":todos
+            "data":post
         }));
         res.end();
-    }else if(req.url =="/todos" && req.method == "POST"){
+    }else if(req.url =="/posts" && req.method == "POST"){
         req.on('end',async()=>{
             try{
-                const title = JSON.parse(body).title;
-                const completed = JSON.parse(body).completed;
-                if(title !== undefined){
-                  await Todo.create({
-                        "title":title,
-                        "completed":completed
-                    })
-                    todos = await Todo.find();
+                  const data = JSON.parse(body);
+                  const post =  await Post.create(data)
                     res.writeHead(200,headers);
                     res.write(JSON.stringify({
                     "status":"success",
-                    "data":todos
+                    "data":post
                     }));
                     res.end();
-                }else{
-                    errorHandle(res)
-                    }
             }catch(error){
                 console.log("錯誤",error);
                 errorHandle(res)
             }
         })
     }
-    else if(req.url =="/todos" && req.method == "DELETE"){
-        await Todo.deleteMany({})
-        todos = await Todo.find();
+    else if(req.url =="/posts" && req.method == "DELETE"){
+        const post = await Post.deleteMany({})
         res.writeHead(200,headers);
         res.write(JSON.stringify({
             "status":"success",
-            "data":todos
+            "data":post
         }));
         res.end();
     }
-    else if(req.url.startsWith("/todos/") && req.method == "DELETE"){
+    else if(req.url.startsWith("/posts/") && req.method == "DELETE"){
         const id = req.url.split('/').pop();
         try{
-            await Todo.findByIdAndDelete(id)
-            todos = await Todo.find();
+            const post = await Post.findByIdAndDelete(id)
             res.writeHead(200,headers);
             res.write(JSON.stringify({
             "status":"success",
-            "data":todos
+            "data":post
             }));
             res.end();
         }catch{
@@ -85,22 +74,16 @@ const requestListener =async (req , res) =>{
         }           
         
     }
-    else if (req.url.startsWith("/todos/") && req.method == "PATCH"){
+    else if (req.url.startsWith("/posts/") && req.method == "PATCH"){
            req.on('end',async()=>{
                try{
                     const id = req.url.split('/').pop();
-                    const title = JSON.parse(body).title;
-                    const completed = JSON.parse(body).completed;
-                    const editContent = {
-                        "title":title,
-                        "completed":completed
-                    }
-                    await Todo.findByIdAndUpdate(id,editContent)
-                    todos = await Todo.find();
+                    const data = JSON.parse(body)
+                    const post =  await Post.findByIdAndUpdate(id,data)
                     res.writeHead(200,headers);
                     res.write(JSON.stringify({
                         "status":"success",
-                        "data":todos
+                        "data":post
                     }));
                     res.end();
                }catch{
